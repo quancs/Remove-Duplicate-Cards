@@ -15,8 +15,7 @@ class DuplicateConfigWindow(QWidget):
     selectedMethod = "keep old cards, remove new cards"
     selectedKey = ""
     deck_list = []
-    method_list = ['keep old cards, remove new cards',
-                   'keep new cards, remove old cards']
+    method_list = ['keep old cards, remove new cards', 'keep new cards, remove old cards']
     key_list = []
 
     def __init__(self, deckNameList):
@@ -33,7 +32,7 @@ class DuplicateConfigWindow(QWidget):
         self.v_layout = QFormLayout(self)
         self.layout_init()
         self.combobox_init()
-        
+
         if len(deckNameList):
             self.selectedDeck = deckNameList[0]
             self.update_key_set()
@@ -53,14 +52,11 @@ class DuplicateConfigWindow(QWidget):
 
     def combobox_init(self):
         self.combobox_1.addItems(self.deck_list)
-        self.combobox_1.currentIndexChanged.connect(
-            lambda: self.on_deck_selected(self.combobox_1))
+        self.combobox_1.currentIndexChanged.connect(lambda: self.on_deck_selected(self.combobox_1))
         self.combobox_2.addItems(self.method_list)
-        self.combobox_2.currentIndexChanged.connect(
-            lambda: self.on_method_selected(self.combobox_2))
+        self.combobox_2.currentIndexChanged.connect(lambda: self.on_method_selected(self.combobox_2))
         self.combobox_3.addItems(self.key_list)
-        self.combobox_3.currentIndexChanged.connect(
-            lambda: self.on_key_selected())
+        self.combobox_3.currentIndexChanged.connect(lambda: self.on_key_selected())
 
     def on_deck_selected(self, combobox):
         self.selectedDeck = combobox.currentText()
@@ -74,7 +70,7 @@ class DuplicateConfigWindow(QWidget):
 
     def plan(self, execute):
         self.selDeck = mw.col.decks.byName(self.selectedDeck)
-        if(self.selDeck):
+        if (self.selDeck):
             if self.selectedMethod == self.method_list[0]:
                 self.do_plan(self.selDeck, True, execute)
             else:
@@ -89,10 +85,13 @@ class DuplicateConfigWindow(QWidget):
             md = defaultdict(list)
             for noteId1 in notes:
                 note1 = mw.col.getNote(noteId1)
-                index1 = note1.keys().index(self.selectedKey)
-                if index1 >= 0:
-                    val1 = note1.values()[index1]
-                    md[val1].append((noteId1, note1.cards()[0].due))
+                if self.selectedKey in note1.keys():
+                    index1 = note1.keys().index(self.selectedKey)
+                    if index1 >= 0:
+                        val1 = note1.values()[index1]
+                        md[val1].append((noteId1, note1.cards()[0].due))
+                else:
+                    pass
             total = 0
             for k, v in md.items():
                 if len(v) > 1:
@@ -104,31 +103,32 @@ class DuplicateConfigWindow(QWidget):
                     for (noteId1, due1) in v:
                         if execute and noteId1 != noteId:
                             mw.col.remNotes([noteId1])
-                            total = total+1
-                            self.console.append(
-                                k+": note_id:"+str(noteId1)+" due:"+str(due1)+" X done")
+                            total = total + 1
+                            self.console.append(k + ": note_id:" + str(noteId1) + " due:" + str(due1) + " X done")
                         elif execute == False and noteId1 == noteId:
-                            self.console.append(
-                                k+": note_id:"+str(noteId1)+" due:"+str(due1))
+                            self.console.append(k + ": note_id:" + str(noteId1) + " due:" + str(due1))
                         elif execute == False:
-                            total = total+1
-                            self.console.append(
-                                k+": note_id:"+str(noteId1)+" due:"+str(due1)+" X")
+                            total = total + 1
+                            self.console.append(k + ": note_id:" + str(noteId1) + " due:" + str(due1) + " X")
             if execute:
                 self.console.append("totally, %d notes were removed" % total)
             else:
-                self.console.append(
-                    "totally, %d notes will be removed" % total)
+                self.console.append("totally, %d notes will be removed" % total)
         else:
             showInfo(f'deck "{self.selectedDeck}" has no card')
 
     def update_key_set(self):
         notes = mw.col.findNotes(f'deck:"{self.selectedDeck}"')
         if len(notes):
-            note = mw.col.getNote(notes[1])
-            self.key_list = note.keys()
+            keys = set()
+            for note_id in notes:
+                note = mw.col.getNote(note_id)
+                self.key_list = note.keys()
+                for key in self.key_list:
+                    keys.add(key)
+
             self.combobox_3.clear()
-            for key in self.key_list:
+            for key in keys:
                 self.combobox_3.addItem(key)
             if len(self.key_list):
                 self.selectedKey = self.key_list[0]

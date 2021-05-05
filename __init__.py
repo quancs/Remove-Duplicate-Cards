@@ -80,6 +80,7 @@ class DuplicateConfigWindow(QWidget):
 
     def do_plan(self, deck, keep_old, execute):
         # 如果queue队列是新队列，则随机删除一个
+        self.console.clear()
         notes = mw.col.findNotes(f'deck:"{self.selectedDeck}"')
         if len(notes):
             md = defaultdict(list)

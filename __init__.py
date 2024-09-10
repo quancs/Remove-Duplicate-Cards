@@ -17,6 +17,7 @@ class DuplicateConfigWindow(QWidget):
     deck_list = []
     method_list = ['keep old cards, remove new cards', 'keep new cards, remove old cards']
     key_list = []
+    COMBINE = "Combine All Keys"
 
     def __init__(self, deckNameList):
         super(DuplicateConfigWindow, self).__init__()
@@ -86,6 +87,8 @@ class DuplicateConfigWindow(QWidget):
             md = defaultdict(list)
             for noteId1 in notes:
                 note1 = mw.col.getNote(noteId1)
+                if self.selectedKey == self.COMBINE:
+                    md[tuple(note1.values())].append((noteId1, note1.cards()[0].due))
                 if self.selectedKey in note1.keys():
                     index1 = note1.keys().index(self.selectedKey)
                     if index1 >= 0:
@@ -96,6 +99,8 @@ class DuplicateConfigWindow(QWidget):
             total = 0
             for k, v in md.items():
                 if len(v) > 1:
+                    if type(k) is tuple:
+                        k = "(combined keys)"
                     (noteId, min_due) = v[0]
                     for (noteId1, due1) in v:
                         if (keep_old and due1 < min_due) or (keep_old == False and due1 > min_due):
@@ -129,10 +134,10 @@ class DuplicateConfigWindow(QWidget):
                     keys.add(key)
 
             self.combobox_3.clear()
+            self.combobox_3.addItem(self.COMBINE)
             for key in keys:
                 self.combobox_3.addItem(key)
-            if len(self.key_list):
-                self.selectedKey = self.key_list[0]
+            self.selectedKey = self.COMBINE
         else:
             showInfo(f'deck "{self.selectedDeck}" has no card')
 

@@ -134,8 +134,9 @@ class DuplicateConfigWindow(QWidget):
         notes = mw.col.findNotes(f'"deck:{deck}"')
 
         if len(notes):
-            if mw.col.field_names_for_note_ids:
-                nks = mw.col.field_names_for_note_ids(notes)
+            m = getattr(mw.col, "field_names_for_note_ids", None)
+            if callable(m):
+                nks = m(notes)
                 for key in nks:
                     self.key_list.add(key)
             else:

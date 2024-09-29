@@ -16,13 +16,14 @@ class DuplicateConfigWindow(QWidget):
     selectedKey = ""
     deck_list = []
     method_list = ['keep old cards, remove new cards', 'keep new cards, remove old cards']
-    key_list = []
+    key_list = None
     COMBINE = "Combine All Keys"
 
     def __init__(self, deckNameList):
         super(DuplicateConfigWindow, self).__init__()
         self.selectedDecks = []
         self.deck_list = deckNameList
+        self.key_list = set()
         self.combobox_1 = CheckableComboBox(self)
         self.combobox_2 = QComboBox(self)
         self.combobox_3 = QComboBox(self)
@@ -54,7 +55,6 @@ class DuplicateConfigWindow(QWidget):
         self.combobox_1.changed.connect(self.on_deck_selected)
         self.combobox_2.addItems(self.method_list)
         self.combobox_2.currentIndexChanged.connect(lambda: self.on_method_selected(self.combobox_2))
-        self.combobox_3.addItems(self.key_list)
         self.combobox_3.currentIndexChanged.connect(lambda: self.on_key_selected())
 
     def on_deck_selected(self, name):
@@ -134,16 +134,21 @@ class DuplicateConfigWindow(QWidget):
         notes = mw.col.findNotes(f'"deck:{deck}"')
 
         if len(notes):
-            keys = set()
-            for note_id in notes:
-                note = mw.col.getNote(note_id)
-                self.key_list = note.keys()
-                for key in self.key_list:
-                    keys.add(key)
+            m = getattr(mw.col, "field_names_for_note_ids", None)
+            if callable(m):
+                nks = m(notes)
+                for key in nks:
+                    self.key_list.add(key)
+            else:
+                for note_id in notes:
+                    note = mw.col.getNote(note_id)
+                    nks = note.keys()
+                    for key in nks:
+                        self.key_list.add(key)
 
             self.combobox_3.clear()
             self.combobox_3.addItem(self.COMBINE)
-            for key in keys:
+            for key in self.key_list:
                 self.combobox_3.addItem(key)
             self.selectedKey = self.COMBINE
         else:
